@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Tantangan Linimasa: Edisi Firenze</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #f3efe2;
+        margin: 0;
+        padding: 20px;
+    }
+    h1 {
+        text-align: center;
+        margin-bottom: 5px;
+    }
+    #difficulty {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    button {
+        padding: 10px 16px;
+        margin: 5px;
+        cursor: pointer;
+        border: none;
+        background: #8c6f4a;
+        color: white;
+        border-radius: 8px;
+        font-size: 15px;
+    }
+    button:hover { background: #a0825c; }
+    #container {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        padding: 20px;
+    }
+    #pool, #timeline {
+        background: white;
+        padding: 15px;
+        border-radius: 12px;
+        width: 40%;
+        min-height: 300px;
+        border: 2px solid #d1c0a8;
+    }
+    h2 {
+        margin-top: 0;
+        text-align: center;
+    }
+    .event {
+        padding: 10px;
+        background: #e8dcc2;
+        margin: 6px 0;
+        border-radius: 6px;
+        cursor: grab;
+        border: 1px solid #b59d7a;
+    }
+    .slot {
+        border: 2px dashed #c7b9a2;
+        padding: 14px;
+        height: 48px;
+        margin: 8px 0;
+        border-radius: 5px;
+    }
+    #feedback {
+        text-align: center;
+        font-weight: bold;
+        margin-top: 20px;
+    }
+</style>
+</head>
+<body>
+
+<h1>🕰️ Timeline Challenge: Florence Edition</h1>
+<div id="difficulty">
+    <strong>Pilih Tingkat Kesulitan:</strong><br>
+    <button onclick="startGame(4)">Mudah</button>
+    <button onclick="startGame(6)">Sedang</button>
+    <button onclick="startGame(8)">Sulit</button>
+</div>
+
+<div id="container">
+    <div id="pool">
+        <h2>Kumpulan Peristiwa</h2>
+        <div id="poolItems"></div>
+    </div>
+
+    <div id="timeline">
+        <h2>Slot Timeline (Urutkan dari Terlama → Terbaru)</h2>
+        <div id="timelineSlots"></div>
+    </div>
+</div>
+
+<div style="text-align:center;">
+    <button onclick="checkOrder()">Periksa Urutan</button>
+    <button onclick="startGame(currentCount)">Atur Ulang</button>
+</div>
+
+<div id="feedback"></div>
+
+<script>
+const EVENTS = [
+    { year: 1296, text: "Pembangunan Florence Cathedral (Duomo) dimulai" },
+    { year: 1348, text: "Wabah Black Death melanda Firenze" },
+    { year: 1401, text: "Kontes Pintu Baptistery dimulai (Ghiberti vs Brunelleschi)" },
+    { year: 1434, text: "Keluarga Medici berkuasa di Firenze" },
+    { year: 1455, text: "Gutenberg mencetak Alkitab pertama" },
+    { year: 1475, text: "Michelangelo lahir" },
+    { year: 1504, text: "Patung David dipasang di Piazza della Signoria" },
+    { year: 1565, text: "Corridoio Vasariano dibangun" }
+];
+
+let currentCount = 4;
+
+function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+}
+
+function startGame(count) {
+    currentCount = count;
+    const selected = shuffle([...EVENTS]).slice(0, count);
+    
+    const pool = document.getElementById("poolItems");
+    const slots = document.getElementById("timelineSlots");
+    const feedback = document.getElementById("feedback");
+
+    pool.innerHTML = "";
+    slots.innerHTML = "";
+    feedback.innerHTML = "";
+
+    selected.forEach((ev, i) => {
+        const div = document.createElement("div");
+        div.className = "event";
+        div.draggable = true;
+        div.dataset.year = ev.year;
+        div.textContent = ev.text;
+        div.addEventListener("dragstart", dragStart);
+        pool.appendChild(div);
+    });
+
+    for (let i = 0; i < count; i++) {
+        const slot = document.createElement("div");
+        slot.className = "slot";
+        slot.addEventListener("dragover", dragOver);
+        slot.addEventListener("drop", dropEvent);
+        slots.appendChild(slot);
+    }
+}
+
+let dragged = null;
+function dragStart(e) {
+    dragged = e.target;
+}
+function dragOver(e) {
+    e.preventDefault();
+}
+function dropEvent(e) {
+    e.preventDefault();
+    if (e.target.classList.contains("slot") && e.target.children.length === 0) {
+        e.target.appendChild(dragged);
+    }
+}
+
+function checkOrder() {
+    const slots = [...document.querySelectorAll(".slot")];
+    const filled = slots.filter(s => s.children.length > 0);
+
+    if (filled.length < currentCount) {
+        document.getElementById("feedback").textContent = "❗ Masih ada slot yang kosong!";
+        return;
+    }
+
+    const years = slots.map(s => parseInt(s.children[0].dataset.year));
+    const sorted = [...years].sort((a, b) => a - b);
+
+    if (JSON.stringify(years) === JSON.stringify(sorted)) {
+        document.getElementById("feedback").textContent = "🎉 Benar! Kamu berhasil mengurutkan dengan tepat!";
+    } else {
+        document.getElementById("feedback").textContent = "❌ Belum tepat. Coba lagi!";
+    }
+}
+</script>
+
+</body>
+</html>
